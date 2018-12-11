@@ -2,14 +2,13 @@ const express = require('express')
 const router = express.Router()
 const mongoose = require('mongoose')
 const jwt = require('jsonwebtoken')
-const { auth_middleware,auth_middleware_admin } = require('../middleware');
+const { auth_middleware,permitir } = require('../middleware');
     require('../model/Projeto')
     const Projeto = mongoose.model('Projeto')
 
 
 
-    router.get('/', auth_middleware_admin,  (req, res, next) =>  {
-        console.log(req.rawHeaders)
+    router.get('/', auth_middleware, permitir('admin', 'professor'), (req, res, next) =>  {
         Projeto.find().populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
             res.json({success: true, msg: 'Successfully getted projetos', projetos});
         }).catch(err => {
@@ -19,9 +18,9 @@ const { auth_middleware,auth_middleware_admin } = require('../middleware');
 
 
 
-    router.get('/user/:id', auth_middleware,  (req, res, next) =>  {
+    router.get('/user/:id', auth_middleware, (req, res, next) =>  {
         const id = req.params.id;
-
+        console.log(req.headers['authorization'])
         Projeto.find({$or:[{lider: id},{integrantes: {_id:id} }]}).populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
             res.json({success: true, msg: 'Successfully getted projetos', projetos});
         }).catch(err => {
@@ -32,7 +31,7 @@ const { auth_middleware,auth_middleware_admin } = require('../middleware');
 
 
     router.post('/', auth_middleware, (req, res) => {
-    
+        console.log(req.headers['authorization'])
         if(!req.body.titulo || req.body.titulo == null || typeof req.body.titulo == undefined){
             res.json({success: false, msg: 'Titulo necessário'})
         }

@@ -5,7 +5,7 @@ const config = require("../config")
 const bcrypt = require('bcryptjs')
 
 const { ObjectID } = require('mongodb');
-const { auth_middleware } = require('../middleware');
+const { auth_middleware} = require('../middleware');
 
 // Loading User Model
 // Carregando Model de usuário

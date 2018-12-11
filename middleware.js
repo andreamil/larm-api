@@ -1,47 +1,33 @@
 const { User } = require('./model/User');
-const jwt = require('jsonwebtoken');
-let auth_middleware = (req, res, next) => {
-  let token = req.headers['authorization']; // Express headers are auto converted to lowercase
-  token = token.slice(7, token.length);
-
-    User.findByToken(token).then(() => {
-      next();
-    }).catch(err => {
-        res.status(401).json(err);
-    });
-
-};
-let auth_middleware_user = (req, res, next) => {
-  let token = req.headers['authorization']; // Express headers are auto converted to lowercase
-  token = token.slice(7, token.length);
-
-    User.findByToken(token).then(() => {
-      if(jwt.decode(token).payload.role==='user'){
-      console.log(role);
-      next();
-      }else{
-        res.status(401).json(err);
+auth_middleware = (req, res, next) => {
+  const bearerHeader = req.headers['authorization']
+  if(typeof bearerHeader !== 'undefined'){
+      try {
+          const bearer = bearerHeader.split(' ');
+          const bearerToken = bearer[1];
+          //jwt.verify(bearerToken, config.secret);
+          User.findByToken(bearerToken).then((user) => {
+            req.role=user.role;
+            next();
+          }).catch(err => {
+            res.status(401).json(err);
+          });
+      } catch (err) {
+          res.sendStatus(403).json(err);
       }
-    }).catch(err => {
-        res.status(401).json(err);
-    });
-
-};
-let auth_middleware_admin = (req, res, next) => {
-  console.log(req.rawHeaders);
-  let token = req.headers['authorization']; // Express headers are auto converted to lowercase
-  token = token.slice(7, token.length);
-    User.findByToken(token).then(() => {
-      console.log(jwt.decode(token).role);
-      if(jwt.decode(token).role=='admin'){      
+  }else{
+      res.sendStatus(403)
+  }
+}
+permitir = (...allowed) => {
+  const isAllowed = role => allowed.indexOf(role) > -1;
+  return (req, res, next) => {
+    if(isAllowed(req.role))
       next();
-      }else{
-        res.json({success: false, msg: 'Não autorizado'});
-      }
-    }).catch(err => {
-        res.status(401).json(err);
-    });
+    else {
+      res.status(403).json({message: "Forbidden"});
+    }
+  }
+}
 
-};
-
-module.exports = { auth_middleware,auth_middleware_user ,auth_middleware_admin };
+module.exports = { auth_middleware, permitir};
