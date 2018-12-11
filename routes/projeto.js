@@ -8,8 +8,8 @@ const { auth_middleware,permitir } = require('../middleware');
 
 
 
-    router.get('/', auth_middleware, permitir('admin', 'professor'), (req, res, next) =>  {
-        Projeto.find().populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
+    router.get('/', auth_middleware/*, permitir('admin', 'professor')*/, (req, res, next) =>  {
+        Projeto.find(req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:{}).populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
             res.json({success: true, msg: 'Successfully getted projetos', projetos});
         }).catch(err => {
             res.json({success: false, msg: 'Erro get projetos',err: err})

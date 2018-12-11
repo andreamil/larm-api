@@ -8,6 +8,7 @@ auth_middleware = (req, res, next) => {
           //jwt.verify(bearerToken, config.secret);
           User.findByToken(bearerToken).then((user) => {
             req.role=user.role;
+            req.id=user._id;
             next();
           }).catch(err => {
             res.status(401).json(err);
