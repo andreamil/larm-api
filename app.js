@@ -8,7 +8,7 @@ const app = express();
 const users = require('./routes/user');
 const projetos = require('./routes/projeto');
 const config = require('./config');
-var morgan = require('morgan')
+var morgan = require('morgan');
 
     mongoose.Promise = global.Promise;
     mongoose.connect(config.databaseURI).then(() => console.log('MongoDB Connected...'))
@@ -16,7 +16,7 @@ var morgan = require('morgan')
 
     app.use(cors());
     app.use(bodyParser.json());
-    app.use(morgan('combined'))
+    app.use(morgan('combined'));
 
     app.use('/auth', users);
     app.use('/projetos', projetos);
