@@ -1,4 +1,4 @@
-const { User } = require('./model/User');
+const { Usuario } = require('./model/Usuario');
 auth_middleware = (req, res, next) => {
   const bearerHeader = req.headers['authorization']
   if(typeof bearerHeader !== 'undefined'){
@@ -6,7 +6,7 @@ auth_middleware = (req, res, next) => {
           const bearer = bearerHeader.split(' ');
           const bearerToken = bearer[1];
           //jwt.verify(bearerToken, config.secret);
-          User.findByToken(bearerToken).then((user) => {
+          Usuario.findByToken(bearerToken).then((user) => {
             req.role=user.role;
             req.id=user._id;
             next();
@@ -21,9 +21,8 @@ auth_middleware = (req, res, next) => {
   }
 }
 permitir = (...allowed) => {
-  const isAllowed = role => allowed.indexOf(role) > -1;
   return (req, res, next) => {
-    if(isAllowed(req.role))
+    if(allowed.indexOf(req.role) > -1)
       next();
     else {
       res.status(403).json({message: "Forbidden"});

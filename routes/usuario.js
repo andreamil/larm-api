@@ -9,8 +9,8 @@ const { auth_middleware} = require('../middleware');
 
 // Loading User Model
 // Carregando Model de usuário
-    require('../model/User')
-    const User = mongoose.model('User')
+    require('../model/Usuario')
+    const Usuario = mongoose.model('Usuario')
 
 // Router
     /*
@@ -54,7 +54,7 @@ const { auth_middleware} = require('../middleware');
                     }
                     // Checking if user already exists in database
                     // Checando se o usuário já existe no banco de dados
-                        User.findOne({email: newUser.email}).then((user) => {
+                    Usuario.findOne({email: newUser.email}).then((user) => {
                             if(user){
                                 return res.json({success: false, msg: config.msgs.userAleadyExists})
                             }else{
@@ -96,7 +96,7 @@ const { auth_middleware} = require('../middleware');
             if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
                 res.json({success: false, msg: config.msgs.invalidPassword})
             }
-              User.authenticate(req.body.email, req.body.password).then((user) => {
+            Usuario.authenticate(req.body.email, req.body.password).then((user) => {
                 user.generateAuthToken().then((token) => {
                   res.json({ success: true, message: 'Successfully authenticated', id: user._id,
                   fullName: user.fullName,
@@ -115,7 +115,7 @@ const { auth_middleware} = require('../middleware');
       });
     router.post('/', (req, res) => {
       console.log(req.body.token);
-      User.findByToken(req.body.token).then((user) => {
+      Usuario.findByToken(req.body.token).then((user) => {
         if(user){
           console.log('authorized',user,req.headers);
         res.json({
@@ -134,7 +134,7 @@ const { auth_middleware} = require('../middleware');
       let token = req.headers['authorization']; // Express headers are auto converted to lowercase
       token = token.slice(7, token.length);
 
-      User.findByToken(token).then((user) => {
+      Usuario.findByToken(token).then((user) => {
         user.tokens[user.tokens.findIndex(crr => crr.token === token)].isValid = false;
         user.save();
         res.json({ message: 'Successfully logged out', user });
@@ -143,7 +143,7 @@ const { auth_middleware} = require('../middleware');
       })
   });
         router.get('/user', auth_middleware, (req, res, next) =>  {
-          User.find().then((user)=>{
+            Usuario.find().then((user)=>{
             res.json({success: true, msg: 'Successfully getted the users', user});
          }).catch(err => {
             res.json({success: false, msg: config.msgs.userSaveFailed,err: err})
@@ -157,7 +157,7 @@ const { auth_middleware} = require('../middleware');
              res.status(404).json({ message: 'User not found' });
            }
 
-            User.findById(id).then((user)=>{
+           Usuario.findById(id).then((user)=>{
               res.json({success: true, msg: 'Successfully getted the user', user});
            }).catch(err => {
               res.json({success: false, msg: config.msgs.userSaveFailed,err: err})
