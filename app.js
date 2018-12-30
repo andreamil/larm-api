@@ -17,7 +17,7 @@ mongoose.connect(config.databaseURI, { useCreateIndex: true, useNewUrlParser: tr
 app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan('combined'));
-app.use('/auth', usuarios);
+app.use('/', usuarios);
 app.use('/projetos', projetos);
 app.use('/registro', registro);
 app.listen(config.port, () => {
