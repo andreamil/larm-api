@@ -9,6 +9,6 @@ const RegistroSchema = new Schema({
     invalido: {type: Boolean},
   });
 
-  var Registro = mongoose.model('Registro', RegistroSchema);
+  var Registro = mongoose.model('Registro', RegistroSchema, 'registros');
 
   module.exports = { Registro }

@@ -8,24 +8,29 @@ const { auth_middleware,permitir } = require('../middleware');
 
 
 
-    router.get('/', auth_middleware/*, permitir('admin', 'professor')*/, (req, res, next) =>  {
-        Projeto.find(req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:{}).populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
-            res.json({success: true, msg: 'Successfully getted projetos', projetos});
-        }).catch(err => {
-            res.json({success: false, msg: 'Erro get projetos',err: err})
-        })
+    router.get('/', auth_middleware, /*permitir('admin', 'professor'),*/ (req, res) =>  {
+        Projeto.find(req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:{})
+            .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
+            .populate('lider', { password: 0, tokens: 0, createdDate:0})
+            .then((projetos)=>{
+                res.json({success: true, msg: 'Successfully getted projetos', projetos});   
+            }).catch(err => {
+                res.json({success: false, msg: 'Erro get projetos',err: err})
+            });
     })
 
 
 
-    router.get('/user/:id', auth_middleware, (req, res, next) =>  {
+    router.get('/user/:id', auth_middleware, (req, res) =>  {
         const id = req.params.id;
-        console.log(req.headers['authorization'])
-        Projeto.find({$or:[{lider: id},{integrantes: {_id:id} }]}).populate('integrantes', { password: 0, tokens: 0,createdDate:0}).populate('lider', { password: 0, tokens: 0,createdDate:0}).then((projetos)=>{
-            res.json({success: true, msg: 'Successfully getted projetos', projetos});
-        }).catch(err => {
-            res.json({success: false, msg: 'Erro get projetos',err: err})
-        })
+        Projeto.find({$or:[{lider: id},{integrantes: {_id:id} }]})
+            .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
+            .populate('lider', { password: 0, tokens: 0,createdDate:0})
+            .then((projetos)=>{
+                res.json({success: true, msg: 'Successfully getted projetos', projetos});
+            }).catch(err => {
+                res.json({success: false, msg: 'Erro get projetos',err: err})
+            });
     })
 
 

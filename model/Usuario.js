@@ -63,10 +63,8 @@ const UsuarioSchema = new Schema({
 
   UsuarioSchema.statics.findByToken = function (token) {
     var Usuario = this;
-    var decoded;
-
     try {
-      decoded = jwt.verify(token, config.secret);
+      var decoded = jwt.verify(token, config.secret);
       return Usuario.findOne({
         '_id': decoded._id,
         'tokens.token': token,
@@ -78,6 +76,6 @@ const UsuarioSchema = new Schema({
     }
   };
 
-  var Usuario = mongoose.model('Usuario', UsuarioSchema);
+  var Usuario = mongoose.model('Usuario', UsuarioSchema, 'usuarios');
 
   module.exports = { Usuario }

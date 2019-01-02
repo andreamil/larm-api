@@ -1,16 +1,17 @@
-const express = require('express')
-const router = express.Router()
-const mongoose = require('mongoose')
-const config = require("../config")
-const bcrypt = require('bcryptjs')
+const express = require('express');
+const router = express.Router();
+const mongoose = require('mongoose');
+const config = require("../config");
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const { ObjectID } = require('mongodb');
 const { auth_middleware} = require('../middleware');
 
 // Loading User Model
 // Carregando Model de usuário
-    require('../model/Usuario')
-    const Usuario = mongoose.model('Usuario')
+    require('../model/Usuario');
+    const Usuario = mongoose.model('Usuario');
 
 // Router
     /*
@@ -27,22 +28,22 @@ const { auth_middleware} = require('../middleware');
             // Validating E-mail
             // Validando E-mail
                 if(!req.body.email || req.body.email == null || typeof req.body.email == undefined){
-                    res.json({success: false, msg: config.msgs.invalidEmail})
+                    res.json({success: false, msg: config.msgs.invalidEmail});
                 }
             // Validating name
             // Validando nome
                 if(!req.body.fullName || req.body.fullName == null || typeof req.body.fullName == undefined){
-                    res.json({success: false, msg: config.msgs.invalidName})
+                    res.json({success: false, msg: config.msgs.invalidName});
                 }
             // Validating password
             // Validando senha
                 if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
-                    res.json({success: false, msg: config.msgs.invalidPassword})
+                    res.json({success: false, msg: config.msgs.invalidPassword});
                 }
                 // Validating password's size
                 // Validando o tamanho da senha
                     if(req.body.password.length < config.passwordMinLength){
-                        res.json({success: false, msg: config.msgs.weakPassword})
+                        res.json({success: false, msg: config.msgs.weakPassword});
                     }
             // Creating user:
             // Criando usuário:
@@ -56,23 +57,23 @@ const { auth_middleware} = require('../middleware');
                     // Checando se o usuário já existe no banco de dados
                     Usuario.findOne({email: newUser.email}).then((user) => {
                             if(user){
-                                return res.json({success: false, msg: config.msgs.userAleadyExists})
+                                return res.json({success: false, msg: config.msgs.userAleadyExists});
                             }else{
                                 // Hashing password
                                 // 'Hasheando' a senha
                                 bcrypt.genSalt(10, (err, salt) => {
                                     bcrypt.hash(newUser.password, salt, (err, hash) => {
                                         if(err){
-                                            res.sendStatus(403)
+                                            res.sendStatus(403);
                                         }
                                         newUser.password = hash;
-                                        var user = new User(newUser);
+                                        var user = new Usuario(newUser);
                                         user.save().then(() => {
-                                          return user.generateAuthToken();
+                                          return jwt.sign({ _id: user._id.toHexString(), role: user.role,fullName:user.fullName }, config.secret);
                                         }).then((token) => {
                                             res.json({success: true, msg: config.msgs.userCreated, user: newUser, data: { token }});
                                         }).catch(err => {
-                                            res.json({success: false, msg: config.msgs.userSaveFailed,err: err})
+                                            res.json({success: false, msg: config.msgs.userSaveFailed,err: err});
                                         })
                                     })
                                 })
@@ -88,26 +89,26 @@ const { auth_middleware} = require('../middleware');
             // Validating E-mail
             // Validando E-mail
             if(!req.body.email || req.body.email == null || typeof req.body.email == undefined){
-                res.json({success: false, msg: config.msgs.invalidEmail})
+                res.json({success: false, msg: config.msgs.invalidEmail});
             }
 
         // Validating password
         // Validando senha
             if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
-                res.json({success: false, msg: config.msgs.invalidPassword})
+                res.json({success: false, msg: config.msgs.invalidPassword});
             }
             Usuario.authenticate(req.body.email, req.body.password).then((user) => {
-                user.generateAuthToken().then((token) => {
+                var token = jwt.sign({ _id: user._id.toHexString(), role: user.role,fullName:user.fullName }, config.secret);//.then((token) => {
                   res.json({ success: true, message: 'Successfully authenticated', id: user._id,
                   fullName: user.fullName,
                   email: user.email,
                   role: user.role, data: { token } });
-                }).catch(err => {
+                /*}).catch(err => {
                    res.status(401).json({ message: 'Erro generateAuthToken' });
-                })
+                })*/
 
               }).catch(err => {
-                 res.status(401).json({ message: 'Erro authenticate' });
+                 res.status(401).json({ message: 'Erro authenticate'+err });
               })
     });
     router.get('/', (req, res) => {
@@ -130,7 +131,7 @@ const { auth_middleware} = require('../middleware');
          res.status(401);
       });
     });
-    router.post('/logout', (req, res) => {
+    /*router.post('/logout', (req, res) => {
       let token = req.headers['authorization']; // Express headers are auto converted to lowercase
       token = token.slice(7, token.length);
 
@@ -141,12 +142,12 @@ const { auth_middleware} = require('../middleware');
       }).catch(err => {
          res.json({ error}) ;
       })
-  });
+  });*/
         router.get('/user', auth_middleware, (req, res, next) =>  {
-            Usuario.find().then((user)=>{
-            res.json({success: true, msg: 'Successfully getted the users', user});
+         Usuario.find().then((usuarios)=>{
+            res.json({success: true, msg: 'Successfully getted the users', usuarios});
          }).catch(err => {
-            res.json({success: false, msg: config.msgs.userSaveFailed,err: err})
+            res.json({success: false, msg: 'Erro get user',err: err})
          })
          });
 
@@ -160,7 +161,7 @@ const { auth_middleware} = require('../middleware');
            Usuario.findById(id).then((user)=>{
               res.json({success: true, msg: 'Successfully getted the user', user});
            }).catch(err => {
-              res.json({success: false, msg: config.msgs.userSaveFailed,err: err})
+              res.json({success: false, msg: 'Erro get user por id',err: err});
            })
          })
 

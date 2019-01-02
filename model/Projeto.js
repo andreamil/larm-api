@@ -13,6 +13,6 @@ const ProjetoSchema = new Schema({
     createdDate: { type: Date, default: new Date() }
   });
 
-  var Projeto = mongoose.model('Projeto', ProjetoSchema);
+  var Projeto = mongoose.model('Projeto', ProjetoSchema, 'projetos');
 
   module.exports = { Projeto }
