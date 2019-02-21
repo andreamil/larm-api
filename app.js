@@ -12,9 +12,9 @@ const config = require('./config');
 var morgan = require('morgan');
 
 mongoose.Promise = global.Promise;
-mongoose.connect(config.databaseURI, { useCreateIndex: true, useNewUrlParser: true }).then(() => console.log('MongoDB Connected...'))
-                                    .catch(err => console.log(err));
-
+mongoose.connect(config.databaseURI, { useCreateIndex: true, useNewUrlParser: true })
+        .then(() => console.log('MongoDB Connected...'))
+        .catch(err => console.log(err));
 app.use(cors());
 app.use(bodyParser.json());
 app.use(morgan('combined'));

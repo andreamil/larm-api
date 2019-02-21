@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const { ObjectID } = require('mongodb');
-const { auth_middleware} = require('../middleware');
+const { auth_middleware, permitir } = require('../middleware');
 
 // Loading User Model
 // Carregando Model de usuário
@@ -23,7 +23,7 @@ const { auth_middleware} = require('../middleware');
         O Objetivo desta routa é criar novos usuários
         Ela recebe três parâmetros: Nome, senha e email, se um deles for nulo a API Vai retornar um json com um mensagem de erro
     */
-    router.post('/register', (req, res) => {
+    router.post('/register', auth_middleware, permitir('admin','professor'), (req, res) => {
         // Server-side Verification
             // Validating E-mail
             // Validando E-mail
@@ -103,6 +103,7 @@ const { auth_middleware} = require('../middleware');
                   fullName: user.fullName,
                   email: user.email,
                   role: user.role, data: { token } });
+                  console.log('usuario: '+user.fullName+', ação: login, authenticate');
                 /*}).catch(err => {
                    res.status(401).json({ message: 'Erro generateAuthToken' });
                 })*/
