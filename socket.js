@@ -14,8 +14,8 @@ module.exports = (http)=>{
             }
             else{
                 socket.emit('autorizado',true);
-                socket.on('check autorizado', () => {
-                    jwt.verify(socket.handshake.query.token, config.secret,(err,decoded)=>{
+                socket.on('check autorizado', (token) => {
+                    jwt.verify(token, config.secret,(err,decoded)=>{
                         console.log('check autorizado')
                     if(err)socket.emit('autorizado',false)
                     else socket.emit('autorizado',true)

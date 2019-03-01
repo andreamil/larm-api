@@ -39,7 +39,7 @@
                             var config = {
                                 status: 'warning',
                                 destroyByClick: true,
-                                duration: 5000,
+                                duration: 20000,
                                 hasIcon: true,
                                 position: 'top-right',
                             }
@@ -60,7 +60,7 @@
                                 var config = {
                                     status: u?u.permissao!='y'?'danger':'success':'danger',
                                     destroyByClick: true,
-                                    duration: 5000,
+                                    duration: 20000,
                                     hasIcon: true,
                                     position: 'top-right',
                                 }
