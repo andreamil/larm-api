@@ -113,7 +113,7 @@ const { auth_middleware, permitir } = require('../middleware');
               })
     });
     router.get('/', (req, res) => {
-        console.log(req.headers);
+        //console.log(req.headers);
       });
     router.post('/', (req, res) => {
       console.log(req.body.token);

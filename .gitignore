@@ -2,3 +2,5 @@
 /functions
 .firebaserc
 firebase.json
+/node_modules
+/.vscode

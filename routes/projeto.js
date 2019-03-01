@@ -6,10 +6,11 @@ const { auth_middleware,permitir } = require('../middleware');
     require('../model/Projeto')
     const Projeto = mongoose.model('Projeto')
 
+  
 
 
     router.get('/', auth_middleware, /*permitir('admin', 'professor'),*/ (req, res) =>  {
-        Projeto.find(req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:{})
+        Projeto.find(/*req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:*/{})
             .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
             .populate('lider', { password: 0, tokens: 0, createdDate:0})
             .then((projetos)=>{

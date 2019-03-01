@@ -2,7 +2,7 @@
 // Arquivo de configuração
 module.exports = {
 //  port: 8080,
-//  databaseURI: "mongodb://localhost/larm",
+ //databaseURI: "mongodb://localhost/larm",
     port: process.env.PORT||8080,
     databaseURI: "mongodb://"+process.env.DBNAME+":"+process.env.DBPASS+"@ds127644.mlab.com:27644/larm",
     // Secret to generate JWT(Json Web Token), you can put any value here Eg: '231312', 'minhaChave', '237283jh2j3h'.
