@@ -6,12 +6,16 @@ const config = require('../config')
 const Schema = mongoose.Schema
 
 const UsuarioSchema = new Schema({
-    fullName: { type: String, required: true, minlength: 1, trim: true },
-    email: { type: String, required: true, trim: true, minlength: 1, unique: true,
+    fullName: { type: String, required: true, minlength: 4, trim: true },
+    email: { type: String, required: true, trim: true, minlength: 4, unique: true,
       validate: { validator: validator.isEmail, message: '{VALUE} is not a valid email' } },
     password: { type: String, required: true, minlength: 4 },
+    dataDeNascimento: { type: Date, },
     role: { type: String, },
     rfid: { type: String },
+    foto: { type: String },
+    siape: { type: String },
+    matricula: { type: String },
     permissao: {type: String},
     tokens: [{
       access: { type: String },
@@ -32,7 +36,12 @@ const UsuarioSchema = new Schema({
   UsuarioSchema.methods.generateAuthToken = function () {
     var user = this;
     var access = 'auth';
-    var token = jwt.sign({ _id: user._id.toHexString(), access, role: user.role,fullName:user.fullName }, config.secret ).toString();
+    var token = jwt.sign({ 	_id: user._id.toHexString(), 
+				role: user.role,
+				fullName:user.fullName,
+				dataDeNascimento:user.dataDeNascimento,
+				matricula:user.matricula,
+				siape:user.siape  }, config.secret ).toString();
 
     user.tokens.push({ access, token});
 

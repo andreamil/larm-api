@@ -9,7 +9,7 @@ const { auth_middleware,permitir } = require('../middleware');
   
 
 
-    router.get('/', auth_middleware, /*permitir('admin', 'professor'),*/ (req, res) =>  {
+    router.get('/todos', auth_middleware, /*permitir('admin', 'professor'),*/ (req, res) =>  {
         Projeto.find(/*req.role=='aluno'?{$or:[{lider: req.id},{integrantes: {_id:req.id} }]}:*/{})
             .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
             .populate('lider', { password: 0, tokens: 0, createdDate:0})
@@ -33,11 +33,21 @@ const { auth_middleware,permitir } = require('../middleware');
                 res.json({success: false, msg: 'Erro get projetos',err: err})
             });
     })
+    router.get('/meus', auth_middleware, (req, res) =>  {
+        const id = req.decoded._id;
+        Projeto.find({$or:[{lider: id},{integrantes: {_id:id} }]})
+            .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
+            .populate('lider', { password: 0, tokens: 0,createdDate:0})
+            .then((projetos)=>{
+                res.json({success: true, msg: 'Successfully getted meus projetos', projetos});
+            }).catch(err => {
+                res.json({success: false, msg: 'Erro get projetos',err: err})
+            });
+    })
 
 
 
-    router.post('/', auth_middleware, (req, res) => {
-        console.log(req.headers['authorization'])
+    router.post('/criar', auth_middleware, (req, res) => {
         if(!req.body.titulo || req.body.titulo == null || typeof req.body.titulo == undefined){
             res.json({success: false, msg: 'Titulo necessário'})
         }
@@ -45,13 +55,11 @@ const { auth_middleware,permitir } = require('../middleware');
         if(!req.body.descricao || req.body.descricao == null || typeof req.body.descricao == undefined){
             res.json({success: false, msg: 'Descrição necessária'})
         }
-        let token = req.headers['authorization']; // Express headers are auto converted to lowercase
-        token = token.slice(7, token.length);
         const newProjeto = {
             titulo: req.body.titulo,
             descricao: req.body.descricao,
             categoria: req.body.categoria,
-            lider: jwt.decode(token)._id,
+            lider: req.decoded._id,
             vigencia: req.body.vigencia
         }
         var projeto = new Projeto(newProjeto);
