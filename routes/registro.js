@@ -102,4 +102,12 @@ Registro.find({ $or:[{invalido: null},{invalido: false}], tipo: 'porta'},{horaEn
             });
 });
 
+router.get('/relatorio/porta/agora', auth_middleware, (req, res) => {
+Registro.find({ $or:[{invalido: null},{invalido: false}], tipo: 'porta',horaSaida:null},{idUser: 1, horaEntrada: 1, rfid:1})
+        .populate('idUser',{password:0,tokens:0}).then(
+            (registros) => {
+                    res.json({success: true, msg: 'Sucesso get registros porta agora', registros});                  
+            }).catch((err)=>res.json({success: false, msg: 'Erro get registros porta agora, '+err,err: err}));
+});
+
 module.exports = router;

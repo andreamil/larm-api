@@ -3,7 +3,7 @@ const Schema = mongoose.Schema
 
 const RegistroSchema = new Schema({
     idUser: { type: Schema.Types.ObjectId, ref: 'Usuario' },
-    rfid: {type: String },
+    rfid: {type: String},
     tipo: {type: String },
     horaEntrada: { type: Date },
     horaSaida: { type: Date, },

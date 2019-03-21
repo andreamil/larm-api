@@ -27,9 +27,13 @@ var io = require('socket.io')(http);
                 //socket.emit('autorizado',true);
                 socket.on('check autorizado', (token) => {
                     jwt.verify(token, config.secret,(err,decoded)=>{
-                    if(err)socket.emit('autorizado',false)
-                    else socket.emit('autorizado',true)
-		    console.log('check '+socket.id)
+                    if(err){
+                        socket.emit('autorizado',false);
+		                console.log('nao autorizado ',socket.id, jwt.decode(token,{json:true}).fullName);
+                    }
+                    else{ 
+                        socket.emit('autorizado',true);
+		                console.log('autorizado ',socket.id, decoded.fullName);}
                     })
                 });
                 socket.on('projetos', () => {
@@ -41,7 +45,14 @@ var io = require('socket.io')(http);
                     socket.emit('projetos', [{titulo: 'sdadsa13131d', lider:{fullname: 'Andre 1',role: 'admin'}},{titulo: 'sdadsa3131ddsadse131', lider:{fullname: 'Andre 2',role: 'admin'}}]);
                 });
                 //console.log(decoded)
-                console.log(`Socket ${socket.id} has connected`);
+                
+                socket.on('disconnect', () => {
+                    var clientIp =socket.request.connection.remoteAddress;
+                    console.log(`${socket.id} desconectou-se ipv6/v4 ${clientIp}`);
+                });
+                
+                var clientIp =socket.request.connection.remoteAddress;
+                console.log(`Socket ${socket.id} conectou-se ipv6/v4 ${clientIp}`);
 		
           //  }
           //});
@@ -52,16 +63,29 @@ mongoose.connect(config.databaseURI, { useCreateIndex: true, useNewUrlParser: tr
         .then(() => console.log('MongoDB Connected...'))
         .catch(err => console.log(err));
 app.use(cors());
-app.use(bodyParser.json());
-
+app.use(bodyParser.json({limit: '50mb'}));
 // app.get('/', (req, res, next) => {
 //     //res.send('ads')
 //     res.sendFile(__dirname + '/index.html');
 // });
-app.use(morgan('common'));
+app.use(morgan('combined',{ 
+skip: (req, res)=> {
+    var url = req.url;
+    if(url.indexOf('?')>0)
+      url = url.substr(0,url.indexOf('?'));
+    if(url.match(/(js|jpg|png|ico|css|woff|woff2|eot|ttf)$/ig)) {
+      return true;
+    }
+    return false;
+  }}));
+app.get('/vncrestart',(req,res)=>{
+    require('child_process').exec('/usr/lib/vino/vino-server');
+
+});
 app.use('/usuarios', usuarios);
 app.use('/projetos', projetos);
 app.use('/registro', registro);
+app.use('/fotosPerfil', express.static(__dirname+'/fotosPerfil'));
 
 app.use(function(req, res, next) {
     var accept = req.accepts('html', 'json', 'xml');
@@ -83,5 +107,3 @@ app.use(express.static(staticRoot));
 http.listen(config.port, () => {
     console.log("Funcionando! porta:"+config.port)
 })
-
-

@@ -82,49 +82,66 @@ const { auth_middleware, permitir } = require('../middleware');
                             res.sendStatus(403)
                         })
     });
-
     router.post('/criar', auth_middleware, permitir('admin','professor'), (req, res) => {
-        // Server-side Verification
-            // Validating E-mail
-            // Validando E-mail
-                if(!req.body.email || req.body.email == null || typeof req.body.email == undefined){
-                    return res.json({success: false, msg: config.msgs.invalidEmail});
-                }
-            // Validating name
-            // Validando nome
-                if(!req.body.fullName || req.body.fullName == null || typeof req.body.fullName == undefined){
-                    return res.json({success: false, msg: config.msgs.invalidName});
-                }
-            // Validating password
-            // Validando senha
-                if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
-                    return res.json({success: false, msg: config.msgs.invalidPassword});
-                }
-                // Validating password's size
-                // Validando o tamanho da senha
-                    if(req.body.password.length < config.passwordMinLength){
-                        return res.json({success: false, msg: config.msgs.weakPassword});
-                    }
-                // Validating password's size
-                // Validando o tamanho da senha
-                    if(req.body.password.length < config.passwordMinLength){
-                        return res.json({success: false, msg: config.msgs.weakPassword});
-                    }
-            // Creating user:
-            // Criando usuário:
-                    const newUser = {
-                        fullName: req.body.fullName,
-                        email: req.body.email,
-                        password: req.body.password,
-                        dataDeNascimento: req.body.dataDeNascimento,
-                        role: req.body.role,
-                    }
-                        req.body.matricula&&(newUser.matricula= req.body.matricula)
-                        req.body.siape&&(newUser.siape= req.body.siape)
-                        req.body.rfid&&(newUser.rfid= req.body.rfid)
+
+                    const newUser = {};
+                    
+                        req.body.fullName&&(newUser.fullName= req.body.fullName)
+                        req.body.email&&(newUser.email= req.body.email)
+                        req.body.password&&(newUser.password= bcrypt.hashSync(req.body.password, 10))
+                        req.body.dataDeNascimento&&(newUser.dataDeNascimento= req.body.dataDeNascimento)
+                        req.body.role&&(newUser.role= req.body.role)
+                        req.body.matricula&&(newUser.matricula=req.body.matricula)
+                        req.body.siape&&(newUser.siape=req.body.siape)
+                        req.body.rfid&&(newUser.rfid=req.body.rfid)
+                        req.body.permissao&&(newUser.permissao=req.body.permissao)
                     // Checking if user already exists in database
                     // Checando se o usuário já existe no banco de dados
-                    Usuario.findOne({email: newUser.email}).then((user) => {
+                    if(req.body._id){
+                        var fotoid;
+                        console.log(req.body.foto)
+                        if(req.body.foto&&req.body.foto.startsWith('data')){
+                            fotoid = salvarFoto(req.body.foto,req.body._id);
+                            if(fotoid)newUser.foto=fotoid;
+                        }  
+                        Usuario.findByIdAndUpdate(req.body._id,newUser,{new:true},(err,userUpd)=>{
+						    if(err)return res.json({success: false, msg: 'falha ao editar usuario'+msg,err: err});
+						    delete userUpd["password"];
+						    if(req.decoded._id==userUpd._id){
+                                return res.json({
+                                success: true, 
+                                msg: 'Usuario editado com sucesso (token recebido)'+' '+fotoid, 
+                                user: userUpd,
+                                token:jwt.sign({ 
+						            _id: userUpd._id.toHexString(), 
+						            role: userUpd.role,
+						            fullName:userUpd.fullName,
+						            dataDeNascimento:userUpd.dataDeNascimento,
+						            matricula:userUpd.matricula,
+						            siape:userUpd.siape,
+						            foto:userUpd.foto,
+						            rfid:userUpd.rfid,
+						            email:userUpd.email,
+						            permissao:userUpd.permissao
+					            }, config.secret)});						        
+						    }
+                            return res.json({success: true, msg: 'Usuario editado com sucesso'+' '+fotoid, user: userUpd});
+                        })   
+                    }
+                    else{
+                        if(!req.body.email || req.body.email == null || typeof req.body.email == undefined){
+                            return res.json({success: false, msg: config.msgs.invalidEmail});
+                        }
+                        if(!req.body.fullName || req.body.fullName == null || typeof req.body.fullName == undefined){
+                            return res.json({success: false, msg: config.msgs.invalidName});
+                        }
+                        if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
+                            return res.json({success: false, msg: config.msgs.invalidPassword});
+                        }
+                        if(req.body.password.length < config.passwordMinLength){
+                            return res.json({success: false, msg: config.msgs.weakPassword});
+                        }
+                        Usuario.findOne({email: newUser.email}).then((user) => {
                             if(user){
                                 return res.json({success: false, msg: config.msgs.userAleadyExists});
                             }else{
@@ -133,24 +150,21 @@ const { auth_middleware, permitir } = require('../middleware');
                                 bcrypt.genSalt(10, (err, salt) => {
                                     bcrypt.hash(newUser.password, salt, (err, hash) => {
                                         if(err){
-                                            res.sendStatus(403);
+                                            return res.sendStatus(403);
                                         }
                                         newUser.password = hash;
                                         var user = new Usuario(newUser);
-                                        user.save()/*.then(() => {
-                                          return jwt.sign({ 
-						_id: user._id.toHexString(), 
-						role: user.role,
-						fullName:user.fullName,
-						dataDeNascimento:user.dataDeNascimento,
-						matricula:user.matricula,
-						siape:user.siape 
-					}, config.secret);
-                                        })*/.then(() => {
-						                    console.log(newUser);
-                                            return res.json({success: true, msg: config.msgs.userCreated, user: newUser});
+                                        user.save().then((savedUser) => {
+                                            
+                                            var fotoid;
+                                            if(req.body.foto){
+                                                fotoid=salvarFoto(req.body.foto,savedUser._id);
+                                                newUser.foto=fotoid;
+                                            }
+						                    console.log(savedUser);
+                                            return res.json({success: true, msg: config.msgs.userCreated+' '+fotoid, user: savedUser});
                                         }).catch(err => {
-                                            return res.json({success: false, msg: config.msgs.userSaveFailed,err: err});
+                                            return res.json({success: false, msg: config.msgs.userSaveFailed+msg,err: err});
                                         })
                                     })
                                 })
@@ -158,9 +172,46 @@ const { auth_middleware, permitir } = require('../middleware');
                         }).catch(err => {
                             return res.sendStatus(403)
                         })
+                        }
     });
-
+    function salvarFoto(foto,id){
+       var base64Data = foto.split(',')[1];
+       try{
+        
+        const fotoid = crypto.randomBytes(16).toString("hex");
+        require("fs").writeFileSync("/home/larm/larm-api/fotosPerfil/"+id+"."+fotoid+".png", base64Data, 'base64');
+        return fotoid;
+       }
+       catch {
+        return false;
+       }
+    
+    }
   //router.post('/authenticate', (req, res) => {
+    router.post('/refresh-token',auth_middleware,(req, res) => {
+            
+            Usuario.findById(req.decoded._id, (err, user) => {
+                var token = jwt.sign({ 
+						_id: user._id.toHexString(), 
+						role: user.role,
+						fullName:user.fullName,
+						dataDeNascimento:user.dataDeNascimento,
+						matricula:user.matricula,
+						siape:user.siape,
+						foto:user.foto,
+						rfid:user.rfid,
+						email:user.email,
+						permissao:user.permissao
+					}, config.secret);
+                  console.log('usuario: '+user.fullName+', ação: refresh-token');
+                  return res.json({ success: true, msg: 'Successfully authenticated', data: { token } });
+
+              }).catch(err => {
+                 return res.status(401).json({ success: true, msg: 'Erro refresh-token',err });
+              })
+    });
+    const crypto = require("crypto");
+
     router.post('/login',(req, res) => {
         // Server-side Verification
             // Validating E-mail
@@ -181,13 +232,14 @@ const { auth_middleware, permitir } = require('../middleware');
 						fullName:user.fullName,
 						dataDeNascimento:user.dataDeNascimento,
 						matricula:user.matricula,
-						siape:user.siape 
+						siape:user.siape,
+						foto:user.foto,
+						rfid:user.rfid,
+						email:user.email,
+						permissao:user.permissao
 					}, config.secret);//.then((token) => {
                   console.log('usuario: '+user.fullName+', ação: login, authenticate');
-                  return res.json({ success: true, message: 'Successfully authenticated', id: user._id,
-                  fullName: user.fullName,
-                  email: user.email,
-                  role: user.role, data: { token } });
+                  return res.json({ success: true, message: 'Successfully authenticated', data: { token } });
                 /*}).catch(err => {
                    res.status(401).json({ message: 'Erro generateAuthToken' });
                 })*/
@@ -196,57 +248,35 @@ const { auth_middleware, permitir } = require('../middleware');
                  return res.status(401).json({ message: 'Erro authenticate'+err });
               })
     });
-    router.get('/', (req, res) => {
-        //console.log(req.headers);
-      });
-    router.post('/', (req, res) => {
-      console.log(req.body.token);
-      Usuario.findByToken(req.body.token).then((user) => {
-        if(user){
-          console.log('authorized',user,req.headers);
-        res.json({
-          msg: 'authorized'
-        });
-      }else{
-        console.log('unauthorized',req.headers);
-         res.status(401);
-      }
-      }).catch(err => {
-        console.log('unauthorized',req.headers);
-         res.status(401);
-      });
-    });
-    /*router.post('/logout', (req, res) => {
-      let token = req.headers['authorization']; // Express headers are auto converted to lowercase
-      token = token.slice(7, token.length);
-
-      Usuario.findByToken(token).then((user) => {
-        user.tokens[user.tokens.findIndex(crr => crr.token === token)].isValid = false;
-        user.save();
-        res.json({ message: 'Successfully logged out', user });
-      }).catch(err => {
-         res.json({ error}) ;
-      })
-  });*/
         router.get('/user', auth_middleware, (req, res, next) =>  {
-         Usuario.find().then((usuarios)=>{
-            res.json({success: true, msg: 'Successfully getted the users', usuarios});
+         Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
+            return res.json({success: true, msg: 'Successfully getted the users', usuarios});
          }).catch(err => {
-            res.json({success: false, msg: 'Erro get user',err: err})
+            return res.json({success: false, msg: 'Erro get user',err: err})
          })
+         
          });
 
          router.get('/user/:id', auth_middleware,  (req, res, next) =>  {
            const id = req.params.id;
 
            if (!ObjectID.isValid(id)) {
-             res.status(404).json({ message: 'User not found' });
+              return res.json({success: false, msg: 'ObjectID invalido',user:{}});
            }
 
-           Usuario.findById(id).then((user)=>{
-              res.json({success: true, msg: 'Successfully getted the user', user});
+           Usuario.findById(id,'-password -tokens -createdDate').then((user)=>{
+              return res.json({success: true, msg: 'Successfully getted the user', user});
            }).catch(err => {
-              res.json({success: false, msg: 'Erro get user por id',err: err});
+              return res.json({success: false, msg: 'Erro get user por id',err: err});
+           })
+         })
+         router.get('/eu', auth_middleware,  (req, res, next) =>  {
+           const id = req.decoded._id;
+
+           Usuario.findById(id,'-password -tokens -createdDate').then((user)=>{
+              return res.json({success: true, msg: 'Successfully getted eu', user});
+           }).catch(err => {
+              return res.json({success: false, msg: 'Erro get user por id',err: err});
            })
          })
 

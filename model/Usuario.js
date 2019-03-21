@@ -10,19 +10,13 @@ const UsuarioSchema = new Schema({
     email: { type: String, required: true, trim: true, minlength: 4, unique: true,
       validate: { validator: validator.isEmail, message: '{VALUE} is not a valid email' } },
     password: { type: String, required: true, minlength: 4 },
-    dataDeNascimento: { type: Date, },
+    dataDeNascimento: { type: String, },
     role: { type: String, },
     rfid: { type: String },
     foto: { type: String },
     siape: { type: String },
     matricula: { type: String },
     permissao: {type: String},
-    tokens: [{
-      access: { type: String },
-      token: { type: String },
-      isValid: { type: Boolean, default: true },
-      tokenDate: { type: Date, default: new Date() } }],
-    access_token: { type: String },
     createdDate: { type: Date, default: new Date() }
   });
 
@@ -32,7 +26,7 @@ const UsuarioSchema = new Schema({
 
   //   return _.pick(userObject, ['_id', 'email', 'name', 'date']);
   // };
-
+/*
   UsuarioSchema.methods.generateAuthToken = function () {
     var user = this;
     var access = 'auth';
@@ -48,7 +42,7 @@ const UsuarioSchema = new Schema({
     return user.save().then(() => {
       return token;
     });
-  };
+  };*/
 
   UsuarioSchema.statics.authenticate = function (email, password) {
 
@@ -71,7 +65,7 @@ const UsuarioSchema = new Schema({
       });
     });
   }
-
+/*
   UsuarioSchema.statics.findByToken = function (token) {
     var Usuario = this;
     try {
@@ -85,7 +79,7 @@ const UsuarioSchema = new Schema({
     } catch (e) {
       return Promise.reject(e);
     }
-  };
+  };*/
 
   var Usuario = mongoose.model('Usuario', UsuarioSchema, 'usuarios');
 
