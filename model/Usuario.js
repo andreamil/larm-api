@@ -11,7 +11,7 @@ const UsuarioSchema = new Schema({
       validate: { validator: validator.isEmail, message: '{VALUE} is not a valid email' } },
     password: { type: String, required: true, minlength: 4 },
     dataDeNascimento: { type: String, },
-    role: { type: String, },
+    role: [{ type: String, }],
     rfid: { type: String },
     foto: { type: String },
     siape: { type: String },

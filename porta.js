@@ -65,25 +65,25 @@ module.exports = function(io) {
         });
         socket.on('ler novo usuario', () => {
             if (newUserTo) {
-                var config = {
-                    status: 'warning',
-                    destroyByClick: true,
-                    duration: 5000,
-                    hasIcon: true,
-                    position: 'top-right',
-                }
                 socket.emit('notificacao', {
                     body: 'Algum usuario esta cadastrando no momento, aguarde',
                     title: 'Entrada',
-                    config
+                    config : {
+                        status: 'warning',
+                        destroyByClick: true,
+                        duration: 5000,
+                        hasIcon: true,
+                        position: 'top-right',
+                    }
                 })
+                socket.emit('novo RFID', '');
             } else {
                 newUserTo = socket.id;
                 console.log('lendo novo usuario', socket.id);
-                socket.emit('lendo novo usuario', true);
+                //socket.emit('lendo novo usuario', true);
                 setTimeout(() => {
                     newUserTo = null;
-                    socket.emit('lendo novo usuario', false);
+                    socket.emit('novo RFID', '');
                 }, 20000);
             }
 
@@ -106,6 +106,11 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
         })
     }
     else{
+    
+    if (newUserTo!=null) {
+		ioInstance.to(newUserTo).emit('novo RFID', rfid);
+		newUserTo = null;
+	}
         Usuario.findOne({
                 rfid: rfid
             }, (err, u) => {
@@ -162,11 +167,6 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
                                 if(u)registro.idUser=u._id;
                                 if((u && u.permissao == 'n')||!u)registro.invalido = true;
 
-				                if (newUserTo!=null) {
-				                    ioInstance.to(newUserTo).emit('novo RFID', rfid);
-				                    newUserTo = null;
-					                //sp.write('RFID registrado!');
-				                }
                                 if(serialwrite)sp.write(write);
                                 registro.save().then((registroCriado) => {
                                     var config = {

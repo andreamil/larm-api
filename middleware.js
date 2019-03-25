@@ -25,7 +25,8 @@ auth_middleware = (req, res, next) => {
 }
 permitir = (...allowed) => {
   return (req, res, next) => {
-    if(allowed.indexOf(req.decoded.role) > -1)
+  
+    if(allowed.filter(value => req.decoded.role.includes(value)).length > 0)
       next();
     else {
       res.status(403).json({message: "Forbidden"});

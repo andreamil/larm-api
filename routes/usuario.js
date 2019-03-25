@@ -106,11 +106,11 @@ const { auth_middleware, permitir } = require('../middleware');
                         }  
                         Usuario.findByIdAndUpdate(req.body._id,newUser,{new:true},(err,userUpd)=>{
 						    if(err)return res.json({success: false, msg: 'falha ao editar usuario'+msg,err: err});
-						    delete userUpd["password"];
+						    userUpd.password=undefined;
 						    if(req.decoded._id==userUpd._id){
                                 return res.json({
                                 success: true, 
-                                msg: 'Usuario editado com sucesso (token recebido)'+' '+fotoid, 
+                                msg: 'Usuario editado com sucesso (token recebido)'+' '+userUpd.foto, 
                                 user: userUpd,
                                 token:jwt.sign({ 
 						            _id: userUpd._id.toHexString(), 
@@ -125,7 +125,7 @@ const { auth_middleware, permitir } = require('../middleware');
 						            permissao:userUpd.permissao
 					            }, config.secret)});						        
 						    }
-                            return res.json({success: true, msg: 'Usuario editado com sucesso'+' '+fotoid, user: userUpd});
+                            return res.json({success: true, msg: 'Usuario editado com sucesso', user: userUpd});
                         })   
                     }
                     else{
@@ -162,9 +162,10 @@ const { auth_middleware, permitir } = require('../middleware');
                                                 newUser.foto=fotoid;
                                             }
 						                    console.log(savedUser);
-                                            return res.json({success: true, msg: config.msgs.userCreated+' '+fotoid, user: savedUser});
+						                    savedUser.password=undefined;
+                                            return res.json({success: true, msg: config.msgs.userCreated, user: savedUser});
                                         }).catch(err => {
-                                            return res.json({success: false, msg: config.msgs.userSaveFailed+msg,err: err});
+                                            return res.json({success: false, msg: config.msgs.userSaveFailed,err: err});
                                         })
                                     })
                                 })
