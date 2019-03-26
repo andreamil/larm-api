@@ -7,11 +7,12 @@ const Schema = mongoose.Schema
 
 const UsuarioSchema = new Schema({
     fullName: { type: String, required: true, minlength: 4, trim: true },
-    email: { type: String, required: true, trim: true, minlength: 4, unique: true,
-      validate: { validator: validator.isEmail, message: '{VALUE} is not a valid email' } },
+    email: { type: String, unique: true, trim: true/*, required: true, trim: true, minlength: 4,
+      validate: { validator: validator.isEmail, message: '{VALUE} is not a valid email' } */},
     password: { type: String, required: true, minlength: 4 },
     dataDeNascimento: { type: String, },
     role: [{ type: String, }],
+    grau: { type: String },
     rfid: { type: String },
     foto: { type: String },
     siape: { type: String },

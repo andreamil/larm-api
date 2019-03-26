@@ -82,9 +82,11 @@ const { auth_middleware, permitir } = require('../middleware');
                             res.sendStatus(403)
                         })
     });
-    router.post('/criar', auth_middleware, permitir('admin','professor'), (req, res) => {
-
-                    const newUser = {};
+    router.post('/criar', auth_middleware, (req, res) => {
+                    if(!req.decoded.role.includes('admin')&&req.decoded._id!=req.body._id){
+                      return res.status(403).json({message: "Forbidden"});
+                    }
+                    var newUser = {};
                     
                         req.body.fullName&&(newUser.fullName= req.body.fullName)
                         req.body.email&&(newUser.email= req.body.email)
@@ -99,7 +101,6 @@ const { auth_middleware, permitir } = require('../middleware');
                     // Checando se o usuário já existe no banco de dados
                     if(req.body._id){
                         var fotoid;
-                        console.log(req.body.foto)
                         if(req.body.foto&&req.body.foto.startsWith('data')){
                             fotoid = salvarFoto(req.body.foto,req.body._id);
                             if(fotoid)newUser.foto=fotoid;
@@ -154,13 +155,13 @@ const { auth_middleware, permitir } = require('../middleware');
                                         }
                                         newUser.password = hash;
                                         var user = new Usuario(newUser);
+                                        var fotoid;
+                                        if(req.body.foto){
+                                            fotoid=salvarFoto(req.body.foto,savedUser._id);
+                                            newUser.foto=fotoid;
+                                        }
                                         user.save().then((savedUser) => {
                                             
-                                            var fotoid;
-                                            if(req.body.foto){
-                                                fotoid=salvarFoto(req.body.foto,savedUser._id);
-                                                newUser.foto=fotoid;
-                                            }
 						                    console.log(savedUser);
 						                    savedUser.password=undefined;
                                             return res.json({success: true, msg: config.msgs.userCreated, user: savedUser});
@@ -179,7 +180,7 @@ const { auth_middleware, permitir } = require('../middleware');
        var base64Data = foto.split(',')[1];
        try{
         
-        const fotoid = crypto.randomBytes(16).toString("hex");
+        const fotoid = crypto.randomBytes(8).toString("hex");
         require("fs").writeFileSync("/home/larm/larm-api/fotosPerfil/"+id+"."+fotoid+".png", base64Data, 'base64');
         return fotoid;
        }
@@ -226,8 +227,25 @@ const { auth_middleware, permitir } = require('../middleware');
             if(!req.body.password || req.body.password == null || typeof req.body.password == undefined){
                 return res.json({success: false, msg: config.msgs.invalidPassword});
             }
-            Usuario.authenticate(req.body.email, req.body.password).then((user) => {
-                var token = jwt.sign({ 
+            Usuario.findOne({$or:[{email: req.body.email},{matricula: req.body.email},{siape: req.body.email}]}).then((user) => {
+              if (!user) {
+                return res.status(401).json({ msg: 'Email incorreto' });
+              }
+                if(user.password==undefined){
+                    user.password = bcrypt.hashSync(user.matricula, bcrypt.genSaltSync(10));
+                    user.save();
+                }
+                if(user.role==undefined||user.role.length==0){
+                    if(user.grau=='GRADUACAO')user.role.push('aluno');
+                    if(user.grau=='DOUTORADO')user.role.push('professor');
+                    user.save();
+                }
+              console.log(user.role);
+                // Use bcrypt.compare to compare password and user.password
+                bcrypt.compare(req.body.password, user.password, (err, resS) => {
+                  if (resS) {
+                  console.log(resS);
+                    var token = jwt.sign({ 
 						_id: user._id.toHexString(), 
 						role: user.role,
 						fullName:user.fullName,
@@ -240,14 +258,12 @@ const { auth_middleware, permitir } = require('../middleware');
 						permissao:user.permissao
 					}, config.secret);//.then((token) => {
                   console.log('usuario: '+user.fullName+', ação: login, authenticate');
-                  return res.json({ success: true, message: 'Successfully authenticated', data: { token } });
-                /*}).catch(err => {
-                   res.status(401).json({ message: 'Erro generateAuthToken' });
-                })*/
-
-              }).catch(err => {
-                 return res.status(401).json({ message: 'Erro authenticate'+err });
-              })
+                  return res.json({ success: true, msg: 'Autenticado com sucesso', data: { token } });
+                  } else {
+                   return res.status(401).json({ msg: 'Senha incorreta' });
+                  }
+                });
+            });
     });
         router.get('/user', auth_middleware, (req, res, next) =>  {
          Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
@@ -279,6 +295,12 @@ const { auth_middleware, permitir } = require('../middleware');
            }).catch(err => {
               return res.json({success: false, msg: 'Erro get user por id',err: err});
            })
+         })
+         router.delete('/excluir/:id', auth_middleware,permitir('admin'),  (req, res, next) =>  {           
+           Usuario.findByIdAndRemove(req.params.id, (err, tasks) => {
+            if (err) return res.json({success: false, msg: 'Erro remove user por id',err: err});
+            return res.json({success: true, msg: 'Usuario removido com sucesso'});
+        });
          })
 
 

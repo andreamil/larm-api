@@ -14,6 +14,14 @@ const { auth_middleware,permitir } = require('../middleware');
             .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
             .populate('lider', { password: 0, tokens: 0, createdDate:0})
             .then((projetos)=>{
+                var pesquisa=[];
+                var extensao=[];
+                projetos.filter(projeto=>{
+                    projeto.categoria=='pesquisa'
+                        ?pesquisa.push(projeto)
+                        :extensao.push(projeto)                
+                })
+                projetos={pesquisa,extensao};
                 res.json({success: true, msg: 'Successfully getted projetos', projetos});   
             }).catch(err => {
                 res.json({success: false, msg: 'Erro get projetos',err: err})
@@ -39,6 +47,14 @@ const { auth_middleware,permitir } = require('../middleware');
             .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
             .populate('lider', { password: 0, tokens: 0,createdDate:0})
             .then((projetos)=>{
+                var pesquisa=[];
+                var extensao=[];
+                projetos.filter(projeto=>{
+                    projeto.categoria=='pesquisa'
+                        ?pesquisa.push(projeto)
+                        :extensao.push(projeto)                
+                })
+                projetos={pesquisa,extensao};
                 res.json({success: true, msg: 'Successfully getted meus projetos', projetos});
             }).catch(err => {
                 res.json({success: false, msg: 'Erro get projetos',err: err})

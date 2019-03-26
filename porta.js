@@ -24,6 +24,7 @@ sp.on('close', function() {
     var i =  setInterval(() => {
         
         if (sp.isOpen){
+            require('fs').appendFileSync('log_reconnect.txt', 'arduino reconectado '+new Date()+'\n');
             clearInterval(i)
         }   
         else{         
@@ -52,7 +53,7 @@ module.exports = function(io) {
             var digestRequest = require('request-digest')('larm', 'camera123');
             digestRequest.request({
               host: 'http://150.162.234.21',
-              path: '/HP%20Webcam%20HD-4110/poll.php',
+              path: '/Camera%2001/poll.php',
               port: 8888,
               method: 'GET',
               encoding: null,
