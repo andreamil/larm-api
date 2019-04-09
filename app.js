@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require("express");
 const app = express(),
-   path = require('path'),
-   fs = require('fs');;
+path = require('path'),
+fs = require('fs');;
 const http = require('http').Server(app);
 const bodyParser = require("body-parser");
 const cors = require('cors');
@@ -78,14 +78,11 @@ skip: (req, res)=> {
     }
     return false;
   }}));
-app.use('/vncrestart',express.Router().get('/',(req,res)=>{
-    const vc=require( 'child_process' ).spawn( '/usr/lib/vino/vino-server', {
-  detached: true,
-  stdio: 'ignore'
-});
-vc.unref();
-    console.log('VNC-RESTART');
-    res.send('restart executado');
+app.use('/infodump',express.Router().get('/',(req,res)=>{
+const inspector = require('event-loop-inspector')();
+const dump = inspector.dump();
+ 
+res.send(dump);
 }));
 app.use('/usuarios', usuarios);
 app.use('/projetos', projetos);

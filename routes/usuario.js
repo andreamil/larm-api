@@ -154,17 +154,17 @@ const { auth_middleware, permitir } = require('../middleware');
                                             return res.sendStatus(403);
                                         }
                                         newUser.password = hash;
-                                        var user = new Usuario(newUser);
                                         var fotoid;
                                         if(req.body.foto){
                                             fotoid=salvarFoto(req.body.foto,savedUser._id);
                                             newUser.foto=fotoid;
                                         }
-                                        user.save().then((savedUser) => {
+                                        var user = new Usuario(newUser);
+                                        user.save().then(() => {
                                             
-						                    console.log(savedUser);
-						                    savedUser.password=undefined;
-                                            return res.json({success: true, msg: config.msgs.userCreated, user: savedUser});
+						                    console.log(user);
+						                    user.password=undefined;
+                                            return res.json({success: true, msg: config.msgs.userCreated, user: user});
                                         }).catch(err => {
                                             return res.json({success: false, msg: config.msgs.userSaveFailed,err: err});
                                         })

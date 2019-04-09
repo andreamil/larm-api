@@ -1,15 +1,16 @@
 const mongoose = require('mongoose');
+var mongoosePaginate = require('mongoose-paginate');
 const Schema = mongoose.Schema
 
 const RegistroSchema = new Schema({
-    idUser: { type: Schema.Types.ObjectId, ref: 'Usuario' },
+    usuario: { type: Schema.Types.ObjectId, ref: 'Usuario' },
     rfid: {type: String},
     tipo: {type: String },
     horaEntrada: { type: Date },
     horaSaida: { type: Date, },
     invalido: {type: Boolean},
   });
-
+  RegistroSchema.plugin(mongoosePaginate);
   var Registro = mongoose.model('Registro', RegistroSchema, 'registros');
 
   module.exports = { Registro }

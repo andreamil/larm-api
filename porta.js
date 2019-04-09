@@ -5,49 +5,118 @@ const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline')
 
 console.log('Conectando ao Arduino...');
-const sp = new SerialPort("/dev/ttyUSB0", {
+const spFora = new SerialPort("/dev/ttyUSB0", {
     baudRate: 9600
-})
-const parser = sp.pipe(new Readline({
-    delimiter: '\r\n'
-}))
-
-var newUserTo = null;
-var ioInstance;
-sp.on('open', function() {
-    console.log('porta serial aberta');
-});
-sp.on('close', function() {
-    console.log('->CLOSED<-');
-    console.log(sp.isOpen);
-
-    var i =  setInterval(() => {
-        
-        if (sp.isOpen){
-            require('fs').appendFileSync('log_reconnect.txt', 'arduino reconectado '+new Date()+'\n');
+},(err)=>{
+    if(err){        
+    var i =  setInterval(() => {        
+        if (spFora.isOpen){
+            require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
             clearInterval(i)
         }   
         else{         
-            sp.open((err)=>{
-                console.log("arduino desconectado");                
+            spFora.open((err)=>{
+                console.log("arduino fora desconectado");                
+            })     
+        }        
+    }, 1000);
+    }
+})
+const parserFora = spFora.pipe(new Readline({
+    delimiter: '\r\n'
+}))
+const spDentro = new SerialPort("/dev/ttyACM0", {
+    baudRate: 9600
+},(err)=>{
+    if(err){        
+        var i =  setInterval(() => {        
+            if (spDentro.isOpen){
+                require('fs').appendFileSync('log_reconnect.txt', 'arduino dentro reconectado '+new Date()+'\n');
+                clearInterval(i)
+            }   
+            else{         
+                spDentro.open((err)=>{
+                    console.log("arduino dentro desconectado");                
+                })     
+            }        
+        }, 1000);
+    }
+})
+const parserDentro = spDentro.pipe(new Readline({
+    delimiter: '\r\n'
+}))
+var newUserTo = null;
+var ioInstance;
+spFora.on('open', function() {
+    console.log('porta serial fora aberta');
+});
+spFora.on('close', function() {
+    console.log('->CLOSED<-');
+    console.log(spFora.isOpen);
+
+    var i =  setInterval(() => {
+        
+        if (spFora.isOpen){
+            require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
+            clearInterval(i)
+        }   
+        else{         
+            spFora.open((err)=>{
+                console.log("arduino fora desconectado");                
             })     
         }        
     }, 1000);
 });
 
 
-parser.on('data', function(rfid) {
+parserFora.on('data', function(rfid) {
     console.log('RFID lido:', rfid);
-    module.exports.registrarRFID(rfid,true);
+    module.exports.registrarRFID(rfid,'entrada',true);
     });
-parser.on('error', function(err) {
+parserFora.on('error', function(err) {
+    console.log('Error: ', err);
+})
+
+spDentro.on('open', function() {
+    console.log('porta serial dentro aberta');
+});
+spDentro.on('close', function() {
+    console.log('->CLOSED<-');
+    console.log(spDentro.isOpen);
+
+    var i =  setInterval(() => {
+        
+        if (spDentro.isOpen){
+            require('fs').appendFileSync('log_reconnect.txt', 'arduino dentro reconectado '+new Date()+'\n');
+            clearInterval(i)
+        }   
+        else{         
+            spDentro.open((err)=>{
+                console.log("arduino dentro desconectado");                
+            })     
+        }        
+    }, 1000);
+});
+
+
+parserDentro.on('data', function(rfid) {
+    console.log('RFID lido:', rfid);
+    module.exports.registrarRFID(rfid,'saida',true);
+    });
+parserDentro.on('error', function(err) {
     console.log('Error: ', err);
 })
 module.exports = function(io) {
     ioInstance = io;
     ioInstance.on('connection', socket => {
         socket.on('registrarRFID', (rfid) => {
-            module.exports.registrarRFID(rfid,false);
+            module.exports.registrarRFID(rfid,'entrada',false);
+        });
+        socket.on('registrarRFIDentrada', (rfid) => {
+            module.exports.registrarRFID(rfid,'entrada',false);
+        });
+        socket.on('registrarRFIDsaida', (rfid) => {
+            module.exports.registrarRFID(rfid,'saida',false);
         });
         socket.on('get foto larm', () => {
             var digestRequest = require('request-digest')('larm', 'camera123');
@@ -91,7 +160,7 @@ module.exports = function(io) {
         });
     });
 }
-module.exports.registrarRFID=(rfid,serialwrite)=>{
+module.exports.registrarRFID=(rfid,direcao,serialwrite)=>{
     if(rfid==null){
         var config = {
             status: 'danger',
@@ -116,9 +185,104 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
                 rfid: rfid
             }, (err, u) => {
                 if (err) {
-                    if(serialwrite)sp.write('NOK!')
+                    if(serialwrite)spFora.write('NOK!')
                     console.log('Erro find 1 ')
                 } else {
+                    if(direcao=='entrada'){
+                        Registro.findOneAndUpdate({rfid: rfid, horaSaida: null, $or:[{invalido: null},{invalido: false}], tipo: 'porta'},
+                            {$set : {invalido: true}},
+                            {new: true}, 
+                            (err, r) => {
+                                var write = (u ? (u.permissao != 'n' ? u.fullName : 'NOK') : 'NOK') + '!';
+                                console.log(write);
+                                if(serialwrite)spFora.write(write);
+                                var nome = u ? u.fullName : 'Usuario nao cadastrado';
+                                var barrado = (u && u.permissao != 'n') ? '' : '(BARRADO) ';
+                                var config = {
+                                    status: (u && u.permissao != 'n') ? 'success' : 'danger',
+                                    destroyByClick: true,
+                                    duration: 20000,
+                                    hasIcon: true,
+                                    position: 'top-right',
+                                }
+
+                                ioInstance.emit('notificacao', {
+                                    body: barrado + nome+'\n'+rfid,
+                                    title: 'Entrada',
+                                    config
+                                })
+                                if (err){
+                                    console.log('Erro ao registrar entrada, '+err);
+                                }
+                                else {
+                                const newRegistro = {
+                                    rfid: rfid,
+                                    tipo: 'porta',
+                                    horaEntrada: new Date()
+                                }
+                                
+                                if(u)newRegistro.usuario=u._id;
+                                else newRegistro.invalido=true;
+                                var registro = new Registro(newRegistro);
+                                registro.save().then((registroCriado) => {
+                                    ioInstance.emit('get usuarios no lab');
+                                    console.log('Entrada registrada'+(r?' (entrada anterior invalidada), ':', ')+u?u.fullName:'NOK'+'!');
+                                }).catch(err => {
+                                    console.log('Erro ao registrar entrada, '+err);
+                                });
+                                } 
+                        });
+                    }
+                    if(direcao=='saida'){
+                        Registro.findOneAndUpdate(
+                            {rfid: rfid, horaSaida: null, $or:[{invalido: null},{invalido: false}], tipo: 'porta'},
+                            {$set : {horaSaida: new Date()}},
+                            {new: true},
+                            (err, registro) => {
+                                var write = (u ? (u.permissao != 'n' ? u.fullName : 'NOK') : 'NOK') + '!';
+                                console.log(write);
+                                if(serialwrite)spFora.write(write);
+                                var barrado = (u && u.permissao != 'n') ? '' : '(BARRADO) ';
+                                var nome = u ? u.fullName : 'Usuario nao cadastrado';
+                                var config = {
+                                    status: (u && u.permissao != 'n') ? 'warning' : 'danger',
+                                    destroyByClick: true,
+                                    duration: 20000,
+                                    hasIcon: true,
+                                    position: 'top-right',
+                                }
+
+                                ioInstance.emit('notificacao', {
+                                    body: barrado + nome+'\n'+rfid,
+                                    title: 'Saida',
+                                    config
+                                })
+                                if (err) {
+                                    console.log('Erro ao registrar saída, '+err);
+                                }
+                                else if (registro) {
+                                        ioInstance.emit('get usuarios no lab');
+                                    console.log('Saída registrada, '+'(saida)'+u.fullName+'!');
+                                }
+                                else {
+                                    const newRegistro = {
+                                        rfid: rfid,
+                                        tipo: 'porta',
+                                        horaSaida: new Date(),
+                                        invalido: true
+                                    }
+                                    u&&(newRegistro.usuario= u._id);
+                                    var registro = new Registro(newRegistro);
+                                    registro.save().then((registroCriado) => {
+                                        ioInstance.emit('get usuarios no lab');
+                                        console.log('Saída registrada (inválida pois entrada não encontrada) '+u?u.fullName:'NOK'+'!');
+                                    }).catch(err => {
+                                        console.log('Erro ao registrar saída, '+err);
+                                    });
+                                    
+                                } 
+                        });
+                    }/*
                     Registro.findOneAndUpdate({
                             rfid: rfid,
                             horaSaida: null,
@@ -139,12 +303,12 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
                             var write = (u ? (u.permissao != 'n' ? u.fullName : 'NOK') : 'NOK') + '!';
                             var nome = u ? u.fullName : 'Usuario nao cadastrado';
                             if (err) {
-                                if(serialwrite)sp.write('NOK!');
+                                if(serialwrite)spDentro.write('NOK!');
                                 console.log('Erro registro 1')
                             } else if (r) {
                             if(serialwrite)
-                                if(write!='NOK!')sp.write('(saida)'+write);
-                                else sp.write('NOK!');
+                                if(write!='NOK!')spDentro.write('(saida)'+write);
+                                else spDentro.write('NOK!');
                                 var config = {
                                     status: 'warning',
                                     destroyByClick: true,
@@ -165,10 +329,10 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
                                     tipo: 'porta',
                                     horaEntrada: new Date()
                                 });
-                                if(u)registro.idUser=u._id;
+                                if(u)registro.usuario=u._id;
                                 if((u && u.permissao == 'n')||!u)registro.invalido = true;
 
-                                if(serialwrite)sp.write(write);
+                                if(serialwrite)spDentro.write(write);
                                 registro.save().then((registroCriado) => {
                                     var config = {
                                         status: (u && u.permissao != 'n') ? 'success' : 'danger',
@@ -185,14 +349,13 @@ module.exports.registrarRFID=(rfid,serialwrite)=>{
                                     })
                                     console.log('Entrada registrada, ' + barrado + rfid + ', ' + nome, registroCriado.horaEntrada?registroCriado.horaEntrada:'',registroCriado.horaSaida?registroCriado.horaSaida:'')
                                 }).catch(err => {
-                                    //sp.write('NOK!');
+                                    //spDentro.write('NOK!');
                                     console.log('Erro registro 2', err)
                                 });
                             }
-                        });
+                        });*/
                 }
 
             });
             }
 }
-
