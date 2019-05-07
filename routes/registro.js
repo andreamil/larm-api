@@ -150,8 +150,8 @@ router.get('/relatorio/porta/', auth_middleware, permitir('admin'), (req, res) =
         { $unwind: "$usuario"},
         { $match : { "usuario.fullName": new RegExp(`${req.query.usuario_like}`,'i') }},
         { $sort : { 
-            horaEntrada: req.query._sort=='horaEntrada'?req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1:-1,
-            horaSaida: req.query._sort=='horaSaida'?req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1:-1}},
+            horaEntrada: req.query._sort=='horaEntrada'?req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1:1,
+            horaSaida: req.query._sort=='horaSaida'?req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1:1}},
         { $project: { "usuario.password":0 } },
         { $facet: {
             docs: [{ $skip: (req.query._page - 1) * req.query._limit }, { $limit: parseInt(req.query._limit) }],
