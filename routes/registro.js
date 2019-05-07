@@ -144,7 +144,7 @@ router.get('/relatorio/porta/', auth_middleware, permitir('admin'), (req, res) =
 });
 
 router.get('/relatorio/porta/agora', auth_middleware, (req, res) => {
-    Registro.find({ $or: [{ invalido: null }, { invalido: false }], horaSaida: null }, { usuario: 1, horaEntrada: 1, rfid: 1 })
+    Registro.find({ $or: [{ invalido: null }, { invalido: false }], horaSaida: null ,tipo:'porta'}, { usuario: 1, horaEntrada: 1, rfid: 1 })
         .populate('usuario', { password: 0 }).then(
             (registros) => {
                 res.json({ success: true, msg: 'Sucesso get registros porta agora', registros });
