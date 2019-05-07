@@ -14,6 +14,7 @@ const registro = require('./routes/registro');
 const config = require('./config');
 var morgan = require('morgan');
 var staticRoot = __dirname + '/../larm-web/dist/';
+
 const jwt = require('jsonwebtoken');
 var io = require('socket.io')(http);
     io.on('connection', socket => {

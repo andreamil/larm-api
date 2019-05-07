@@ -14,6 +14,7 @@ const UsuarioSchema = new Schema({
     role: [{ type: String, }],
     grau: { type: String },
     rfid: { type: String },
+    idDigital: { type: Number },
     foto: { type: String },
     siape: { type: String },
     matricula: { type: String },

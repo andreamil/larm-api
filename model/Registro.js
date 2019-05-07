@@ -6,6 +6,7 @@ const RegistroSchema = new Schema({
     usuario: { type: Schema.Types.ObjectId, ref: 'Usuario' },
     rfid: {type: String},
     tipo: {type: String },
+    idDigital: { type: Number },
     horaEntrada: { type: Date },
     horaSaida: { type: Date, },
     invalido: {type: Boolean},
