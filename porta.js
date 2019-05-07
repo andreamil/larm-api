@@ -5,6 +5,13 @@ const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline')
 
 console.log('Conectando ao Arduino...');
+  setTimeout(function worker() {
+    console.log("reiniciando portas seriais...");
+    spFora.close();
+    spDentro.close();
+    setTimeout(worker, 1000*60*60*6);
+  }, 1000*60*60*6);
+  
 const spFora = new SerialPort("/dev/ttyUSB0", {
     baudRate: 9600
 },(err)=>{
