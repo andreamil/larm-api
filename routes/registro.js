@@ -121,25 +121,51 @@ router.get('/relatorio/porta/id/:id', auth_middleware, (req, res) => {
         }).catch((err) => { console.log(err); res.json({ success: false, msg: 'Erro get registros porta, ' + err, err: err }) });
 });
 router.get('/relatorio/porta/', auth_middleware, permitir('admin'), (req, res) => {
-    var query = { $or: [{ invalido: null }, { invalido: false }] };
-    //if(req.query.usuario_like){
-    //    
-    //    query.usuario.fullName=new RegExp(`${req.query.usuario_like}`,'i');
-    //};
-    var options = {
-        select: '-password',
-        populate: 'usuario',
-        sort: {},
-        lean: true,
-        offset: (req.query._page - 1) * req.query._limit,
-        limit: parseInt(req.query._limit)
-    };
-    console.log(query);
-    req.query._order && (options.sort[req.query._sort] = req.query._order == 'ASC' ? 1 : -1);
-    Registro.paginate(query, options).then(
+    // var query = { $or: [{ invalido: null }, { invalido: false }], "usuario.fullName": new RegExp(`${req.query.usuario_like}`,'i') };
+    // //if(req.query.usuario_like){
+    // //    
+    // //    query.usuario.fullName=new RegExp(`${req.query.usuario_like}`,'i');
+    // //};
+    // var options = {
+    //     populate: 'usuario',
+    //     select: '-usuario.password',
+    //     sort: {},
+    //     lean: true,
+    //     offset: (req.query._page - 1) * req.query._limit,
+    //     limit: parseInt(req.query._limit)
+    // };
+    // req.query._order && (options.sort[req.query._sort] = req.query._order == 'ASC' ? 1 : -1);
+    //console.log(req.query,(req.query._page - 1) * req.query._limit);
+    if(!req.query._page)req.query._page=1;
+    if(!req.query._limit)req.query._limit=10;
+    if(!req.query.usuario_like)req.query.usuario_like='';
+    Registro.aggregate([
+        { $lookup: 
+          { from: "usuarios",
+            localField: "usuario",
+            foreignField: "_id",
+            as: "usuario"
+          }
+        },
+        { $unwind: "$usuario"},
+        { $match : { "usuario.fullName": new RegExp(`${req.query.usuario_like}`,'i') }},
+        { $sort : { 
+            horaEntrada: req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1,
+            horaSaida: req.query._order ? req.query._order == 'ASC' ? 1 : -1 : -1}},
+        { $project: { "usuario.password":0 } },
+        { $facet: {
+            docs: [{ $skip: (req.query._page - 1) * req.query._limit }, { $limit: parseInt(req.query._limit) }],
+            totalCount: [
+              { $count: 'total' }
+            ]
+          }
+        }
+        
+     ]).then(
         //Registro.find({ $or:[{invalido: null},{invalido: false}], tipo: 'porta'},{horaEntrada: 1, horaSaida: 1}).populate('usuario',{password:0}).then(
         (result) => {
-            if (result) res.json({ success: true, msg: 'Sucesso get registros porta', registros: result.docs, total: result.total });
+            //console.log(result)
+            if (result) res.json({ success: true, msg: 'Sucesso get registros porta', registros: result[0].docs, total: result[0].totalCount[0]?result[0].totalCount[0].total:0 });
         }).catch((err) => { console.log(err); res.json({ success: false, msg: 'Erro get registros porta, ' + err, err: err }) });
 });
 
