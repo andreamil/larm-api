@@ -139,7 +139,21 @@ router.get('/relatorio/porta/', auth_middleware, permitir('admin'), (req, res) =
     if(!req.query._page)req.query._page=1;
     if(!req.query._limit)req.query._limit=10;
     if(!req.query.usuario_like)req.query.usuario_like='';
-    Registro.aggregate([
+    let intervaloEntrada=[],intervaloSaida=[],pipelines=[];
+    if(req.query.horaEntrada_like){
+        intervaloEntrada=req.query.horaEntrada_like.split(',');
+        intervaloEntrada[0]=new Date(parseInt(intervaloEntrada[0]))
+        intervaloEntrada[1]=new Date(parseInt(intervaloEntrada[1]))
+        pipelines.push({$match :  {horaEntrada: {$gte: intervaloEntrada[0], $lte: intervaloEntrada[1]}}});
+    }
+    if(req.query.horaSaida_like){
+        intervaloSaida=req.query.horaSaida_like.split(',');
+        intervaloSaida[0]=new Date(parseInt(intervaloSaida[0]))
+        intervaloSaida[1]=new Date(parseInt(intervaloSaida[1]))
+        pipelines.push({$match :  {horaSaida: {$gte: intervaloSaida[0], $lte: intervaloSaida[1]}}});
+    }
+    pipelines.push(
+        { $match: { $or: [{ invalido: null }, { invalido: false }]} },
         { $lookup: 
           { from: "usuarios",
             localField: "usuario",
@@ -160,8 +174,10 @@ router.get('/relatorio/porta/', auth_middleware, permitir('admin'), (req, res) =
             ]
           }
         }
-        
-     ]).then(
+     );
+     console.log(pipelines);
+     
+    Registro.aggregate(pipelines).then(
         //Registro.find({ $or:[{invalido: null},{invalido: false}], tipo: 'porta'},{horaEntrada: 1, horaSaida: 1}).populate('usuario',{password:0}).then(
         (result) => {
             //console.log(result)
