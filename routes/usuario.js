@@ -278,7 +278,7 @@ const { auth_middleware, permitir } = require('../middleware');
         
         });
         router.get('/user', auth_middleware, (req, res, next) =>  {
-        Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
+        Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).sort({fullName:1}).then((usuarios)=>{
             return res.json({success: true, msg: 'Successfully getted the users', usuarios});
         }).catch(err => {
             return res.json({success: false, msg: 'Erro get user',err: err})
