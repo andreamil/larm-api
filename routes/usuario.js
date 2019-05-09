@@ -265,14 +265,22 @@ const { auth_middleware, permitir } = require('../middleware');
                 });
             });
     });
-        router.get('/user', auth_middleware, (req, res, next) =>  {
-         Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
-            return res.json({success: true, msg: 'Successfully getted the users', usuarios});
-         }).catch(err => {
+        router.get('/professores', auth_middleware, (req, res, next) =>  {
+        Usuario.find({role:'professor'}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
+            return res.json({success: true, msg: 'Successfully getted the professores', usuarios});
+        }).catch(err => {
             return res.json({success: false, msg: 'Erro get user',err: err})
-         })
-         
-         });
+        })
+        
+        });
+        router.get('/user', auth_middleware, (req, res, next) =>  {
+        Usuario.find({}, { password: 0, tokens: 0,createdDate:0}).then((usuarios)=>{
+            return res.json({success: true, msg: 'Successfully getted the users', usuarios});
+        }).catch(err => {
+            return res.json({success: false, msg: 'Erro get user',err: err})
+        })
+        
+        });
 
          router.get('/user/:id', auth_middleware,  (req, res, next) =>  {
            const id = req.params.id;
