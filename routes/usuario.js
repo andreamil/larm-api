@@ -94,12 +94,16 @@ const { auth_middleware, permitir } = require('../middleware');
                         req.body.dataDeNascimento&&(newUser.dataDeNascimento= req.body.dataDeNascimento)
                         req.body.role&&(newUser.role= req.body.role)
                         req.body.matricula&&(newUser.matricula=req.body.matricula)
+                        req.body.profResponsavel&&(newUser.profResponsavel=req.body.profResponsavel)
                         req.body.siape&&(newUser.siape=req.body.siape)
                         req.body.rfid&&(newUser.rfid=req.body.rfid)
                         req.body.permissao&&(newUser.permissao=req.body.permissao)
-                    // Checking if user already exists in database
-                    // Checando se o usuário já existe no banco de dados
+
                     if(req.body._id){
+
+                        if(req.body.password&&(req.body.password.length < config.passwordMinLength)){
+                            return res.json({success: false, msg: config.msgs.weakPassword});
+                        }
                         var fotoid;
                         if(req.body.foto&&req.body.foto.startsWith('data')){
                             fotoid = salvarFoto(req.body.foto,req.body._id);
