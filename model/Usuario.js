@@ -17,6 +17,7 @@ const UsuarioSchema = new Schema({
     idDigital: { type: Number },
     foto: { type: String },
     siape: { type: String },
+    profResponsavel: { type: Schema.Types.ObjectId, ref: 'Usuario'  },
     matricula: { type: String },
     permissao: {type: String},
     createdDate: { type: Date, default: new Date() }
