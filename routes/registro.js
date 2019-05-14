@@ -192,5 +192,12 @@ router.get('/relatorio/porta/agora', auth_middleware, (req, res) => {
                 res.json({ success: true, msg: 'Sucesso get registros porta agora', registros });
             }).catch((err) => res.json({ success: false, msg: 'Erro get registros porta agora, ' + err, err: err }));
 });
+router.get('/relatorio/porta/hoje', auth_middleware, (req, res) => {
+    Registro.find({ $or: [{ invalido: null }, { invalido: false }],$or:[{horaEntrada: {$gte: new Date(new Date().setHours(-24))}},{horaSaida: {$gte: new Date(new Date().setHours(-24))}},{horaSaida: {$exists: false}}]}, { usuario: 1, horaEntrada: 1, horaSaida: 1 })
+        .populate('usuario', { password: 0 }).then(
+            (registros) => {
+                res.json({ success: true, msg: 'Sucesso get registros porta agora', registros:registros.filter((i)=>i.usuario) });
+            }).catch((err) => res.json({ success: false, msg: 'Erro get registros porta agora, ' + err, err: err }));
+});
 
 module.exports = router;
