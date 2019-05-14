@@ -209,7 +209,7 @@ parserDigital.on('data', function (data) {
 parserDigital.on('error', function (err) {
     console.log('Error: ', err);
 })
->>>>>>> 4aa09cbeb85642b0b300e73e3a502c1371cabda1
+
 const spFora = new SerialPort("/dev/ttyUSB0", {
     baudRate: 9600
 }, (err) => {
