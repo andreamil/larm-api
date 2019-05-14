@@ -4,7 +4,6 @@ const Usuario = mongoose.model('Usuario');
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 
-
 console.log('Conectando ao Arduino...');
   setTimeout(function worker() {
     console.log("reiniciando portas seriais...");
@@ -13,7 +12,8 @@ console.log('Conectando ao Arduino...');
     setTimeout(worker, 1000*60*60*6);
   }, 1000*60*60*6);
   
-const spDigital = new SerialPort("COM9", {
+const spDigital = new SerialPort("COM6", {
+
     baudRate: 2000000
 }, (err) => {
     if (err) {
@@ -62,54 +62,54 @@ parserDigital.on('data', function (data) {
         }
         if (data.msg){
             console.log('msg:', data.msg);
-            if(data.msg=='readyToReceiveImage'){
-                var buffer = Buffer.alloc(256);
-                fs.open('imagens/imagem3.bin', 'r', function(err, fd) {
-                    if (err) {
-                        console.log(err.message);
-                        return;
-                    }
-                    var c=0;
-                    setTimeout(()=>{var interval=setInterval(()=>{
-                        if(c<288)
-                        fs.read(fd, buffer, 0, 256, null, function(err, num,linha) {
-                            spDigital.write(linha);
-                            console.log(linha);
-                        });
-                        else clearInterval(interval)
-                        console.log(c)
-                        c++;
-                    },100);},1000);
-                });
-                //dump();
-                // spDigitalDentro.write("emptyfora");
-                 //setTimeout(()=>cadastrarDigitalID(1),1000);
-                // restoreDumpParaFora();
-            }
+            // if(data.msg=='readyToReceiveImage'){
+            //     var buffer = Buffer.alloc(256);
+            //     fs.open('imagens/imagem3.bin', 'r', function(err, fd) {
+            //         if (err) {
+            //             console.log(err.message);
+            //             return;
+            //         }
+            //         var c=0;
+            //         setTimeout(()=>{var interval=setInterval(()=>{
+            //             if(c<288)
+            //             fs.read(fd, buffer, 0, 256, null, function(err, num,linha) {
+            //                 spDigital.write(linha);
+            //                 console.log(linha);
+            //             });
+            //             else clearInterval(interval)
+            //             console.log(c)
+            //             c++;
+            //         },100);},1000);
+            //     });
+            //     //dump();
+            //     // spDigitalDentro.write("emptyfora");
+            //      //setTimeout(()=>cadastrarDigitalID(1),1000);
+            //     // restoreDumpParaFora();
+            // }
             if(data.msg=='Digitais iguais (dentro)'){
                 //cadastrarDigital("5c74b64c5b423417269d99c4");
                 //dump();
                         
-                setTimeout(()=>{
-                    var buffer = Buffer.alloc(256);
-                    fs.open('templates/signature'+data.id+'.bin', 'r', function(err, fd) {
-                        if (err) {
-                            console.log(err.message);
-                            return;
-                        }
-                        var c=0;
-                        setTimeout(()=>{var interval=setInterval(()=>{
-                            if(c<2)
-                            fs.read(fd, buffer, 0, 256, null, function(err, num,linha) {
-                                spDigital.write(linha);
-                                console.log(linha);
-                            });
-                            else clearInterval(interval)
-                            console.log(c)
-                            c++;
-                        },100);},1000);
-                    });
-                },1000);
+                // setTimeout(()=>{
+                //     var buffer = Buffer.alloc(256);
+                //     fs.open('templates/signature'+data.id+'.bin', 'r', function(err, fd) {
+                //         if (err) {
+                //             console.log(err.message);
+                //             return;
+                //         }
+                //         var c=0;
+                //         setTimeout(()=>{var interval=setInterval(()=>{
+                //             if(c<2)
+                //             fs.read(fd, buffer, 0, 256, null, function(err, num,linha) {
+                //                 spDigital.write(linha);
+                //                 console.log(linha);
+                //             });
+                //             else clearInterval(interval)
+                //             console.log(c)
+                //             c++;
+                //         },100);},1000);
+                //     });
+                // },1000);
                  //setTimeout(()=>cadastrarDigitalID(1),1000);
                 // restoreDumpParaFora();
             }
@@ -601,7 +601,7 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                 console.log('Erro find 1 ')
             } else {
                 if (direcao == 'entrada') {
-                    Registro.findOneAndUpdate({ idDigital: id, horaSaida: null, $or: [{ invalido: null }, { invalido: false }] },
+                    Registro.findOneAndUpdate({ usuario: u._id, horaSaida: null, $or: [{ invalido: null }, { invalido: false }], tipo: 'digital' },
                         { $set: { invalido: true } },
                         { new: true },
                         (err, r) => {
@@ -647,7 +647,7 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                 }
                 if (direcao == 'saida') {
                     Registro.findOneAndUpdate(
-                        { idDigital: id, horaSaida: null, $or: [{ invalido: null }, { invalido: false }] },
+                        { usuario: u._id, horaSaida: null, $or: [{ invalido: null }, { invalido: false }] ,tipo:'digital'},
                         { $set: { horaSaida: new Date() } },
                         { new: true },
                         (err, registro) => {
