@@ -16,18 +16,18 @@ const spDigital = new SerialPort("COM6", {
 
     baudRate: 2000000
 }, (err) => {
-    if (err) {
-        // var i =  setInterval(() => {        
-        //     if (spDigital.isOpen){
-        //         clearInterval(i)
-        //     }   
-        //     else{         
-        //         spDigital.open((err)=>{
-        //             console.log("sensores digitais desconectados");                
-        //         })     
-        //     }        
-        // }, 1000);
-    }
+    // if (err) {
+    //     var i =  setInterval(() => {        
+    //         if (spDigital.isOpen){
+    //             clearInterval(i)
+    //         }   
+    //         else{         
+    //             spDigital.open((err)=>{
+    //                 console.log("sensores digitais desconectados");                
+    //             })     
+    //         }        
+    //     }, 1000);
+    // }
 })
 const parserDigital = spDigital.pipe(new Readline({
     delimiter: '\r\n'
@@ -54,11 +54,17 @@ parserDigital.on('data', function (data) {
     try{
         data = JSON.parse(data);
         //console.log(data);
+        // if (data.noMatch) {
+        //     spDigital.write("barrado");
+        // }
         if (data.abrir) {
             if (data.id) {
                 console.log('id:', data.id,'confidence:',data.confidence);
                 module.exports.registrarIDdigital(data.id, data.direcao, true);
             }
+        }
+        if (data.abrir===false) {
+            spDigital.write("barrado");
         }
         if (data.msg){
             console.log('msg:', data.msg);
@@ -113,11 +119,11 @@ parserDigital.on('data', function (data) {
                  //setTimeout(()=>cadastrarDigitalID(1),1000);
                 // restoreDumpParaFora();
             }
-            if(data.msg=='sensor fora encontrado'){
+            if(data.msg=='sensor de fora encontrado'){
                 // cadastrarDigital("5c74b64c5b423417269d99c4");
                 // dump();
-                //spDigital.write('emptyfora')
-                //setTimeout(()=>spDigital.write('emptydentro'),1000);
+                // setTimeout(()=>spDigital.write('emptyfora'),1000);
+                // setTimeout(()=>spDigital.write('emptydentro'),2000);
                 // restoreDumpParaFora();
             }
             if(data.idUser){
@@ -597,7 +603,7 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
             idDigital: id
         }, (err, u) => {
             if (err) {
-                if (serialwrite) spFora.write('NOK!')
+                if (serialwrite) spFora.write('barrado')
                 console.log('Erro find 1 ')
             } else {
                 if (direcao == 'entrada') {
@@ -605,9 +611,9 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                         { $set: { invalido: true } },
                         { new: true },
                         (err, r) => {
-                            var write = (u ? (u.permissao != 'n' ? u.fullName : 'NOK') : 'NOK') + '!';
-                            console.log(write);
-                            if (serialwrite) spFora.write(write);
+                            var write = (u ? (u.permissao != 'n' ? 'abrir '+u.fullName : 'barrado') : 'barrado');
+                            console.log(write)
+                            if (serialwrite) spDigital.write(write);
                             var nome = u ? u.fullName : 'Usuario nao cadastrado';
                             var barrado = (u && u.permissao != 'n') ? '' : '(BARRADO) ';
                             var config = {
@@ -637,7 +643,6 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                                 var registro = new Registro(newRegistro);
                                 registro.save().then((registroCriado) => {
                                     ioInstance.emit('get usuarios no lab');
-                                    console.log('Entrada registrada')
                                     console.log((r ? ' (entrada anterior invalidada), ' : ', ') ,'id: ',id,' u: ',u?u.fullName:'Usuario nao cadastrado');
                                 }).catch(err => {
                                     console.log('Erro ao registrar entrada, ' + err);
@@ -651,9 +656,8 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                         { $set: { horaSaida: new Date() } },
                         { new: true },
                         (err, registro) => {
-                            var write = (u ? (u.permissao != 'n' ? u.fullName : 'NOK') : 'NOK') + '!';
-                            console.log(write);
-                            if (serialwrite) spFora.write(write);
+                            var write = (u ? (u.permissao != 'n' ? 'sair': 'barrado') : 'barrado');
+                            if (serialwrite) spDigital.write(write);
                             var barrado = (u && u.permissao != 'n') ? '' : '(BARRADO) ';
                             var nome = u ? u.fullName : 'Usuario nao cadastrado';
                             var config = {
@@ -674,8 +678,7 @@ module.exports.registrarIDdigital = (id, direcao, serialwrite) => {
                             }
                             else if (registro) {
                                 ioInstance.emit('get usuarios no lab');
-                                console.log('Saída registrada' )
-                                console.log('(saida)',u ? u.fullName : 'NOK' + '!');
+                                console.log('Saída registrada' ,write)
                             }
                             else {
                                 const newRegistro = {
