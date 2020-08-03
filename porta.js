@@ -4,13 +4,23 @@ const Usuario = mongoose.model('Usuario');
 const SerialPort = require('serialport');
 const Readline = require('@serialport/parser-readline');
 
-console.log('Conectando ao Arduino...');
+// console.log('Conectando ao Arduino...');
   setTimeout(function worker() {
     console.log("reiniciando portas seriais...");
     spFora.close();
-    spDentro.close();
-    setTimeout(worker, 1000*60*60*6);
-  }, 1000*60*60*6);
+    spDentro.close();          
+    if (!spFora.isOpen){
+        spFora.open((err)=>{
+                    console.log("arduino fora ja aberto");                
+                });
+    }
+    if (!spDentro.isOpen){
+        spDentro.open((err)=>{
+                    console.log("arduino dentro ja aberto");                
+                });
+    }
+    setTimeout(worker, 60*31*1000);
+  },60*31*1000);
   
 const spDigital = new SerialPort("COM6", {
 
@@ -216,7 +226,7 @@ const spFora = new SerialPort("/dev/ttyUSB0", {
     if (err) {
         var i =  setInterval(() => {        
             if (spFora.isOpen){
-                require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
+                // require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
                 clearInterval(i)
             }   
             else{         
@@ -236,7 +246,7 @@ const spDentro = new SerialPort("/dev/ttyACM0", {
     if (err) {
         var i =  setInterval(() => {        
             if (spDentro.isOpen){
-                require('fs').appendFileSync('log_reconnect.txt', 'arduino dentro reconectado '+new Date()+'\n');
+                // require('fs').appendFileSync('log_reconnect.txt', 'arduino dentro reconectado '+new Date()+'\n');
                 clearInterval(i)
             }   
             else{         
@@ -262,7 +272,7 @@ spFora.on('close', function () {
     var i =  setInterval(() => {
 
         if (spFora.isOpen){
-            require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
+            // require('fs').appendFileSync('log_reconnect.txt', 'arduino fora reconectado '+new Date()+'\n');
             clearInterval(i)
         }   
         else{         
@@ -292,7 +302,6 @@ spDentro.on('close', function () {
     var i =  setInterval(() => {
 
         if (spDentro.isOpen){
-            require('fs').appendFileSync('log_reconnect.txt', 'arduino dentro reconectado '+new Date()+'\n');
             clearInterval(i)
         }   
         else{         
