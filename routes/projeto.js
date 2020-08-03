@@ -14,22 +14,16 @@ const { auth_middleware,permitir } = require('../middleware');
             .populate('integrantes', { password: 0, tokens: 0,createdDate:0})
             .populate('lider', { password: 0, tokens: 0, createdDate:0})
             .then((projetos)=>{
-                var pesquisa=[];
-                var extensao=[];
-                projetos.filter(projeto=>{
+                var pesquisa=extensao=[];
+                projetos.forEach(projeto=>
                     projeto.categoria=='pesquisa'
                         ?pesquisa.push(projeto)
-                        :extensao.push(projeto)                
-                })
-                projetos={pesquisa,extensao};
-                res.json({success: true, msg: 'Successfully getted projetos', projetos});   
+                        :extensao.push(projeto))
+                res.json({success: true, msg: 'Successfully getted projetos', projetos:{pesquisa,extensao}});   
             }).catch(err => {
                 res.json({success: false, msg: 'Erro get projetos',err: err})
             });
     })
-
-
-
     router.get('/user/:id', auth_middleware, (req, res) =>  {
         const id = req.params.id;
         Projeto.find({$or:[{lider: id},{integrantes: {_id:id} }]})
