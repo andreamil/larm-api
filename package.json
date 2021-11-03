@@ -28,7 +28,7 @@
     "serialport": "^7.1.4",
     "serve-index": "^1.9.1",
     "socket.io": "^2.2.0",
-    "validator": "^10.9.0"
+    "validator": "^13.7.0"
   },
   "author": "",
   "license": "ISC"
