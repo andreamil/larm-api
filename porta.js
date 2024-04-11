@@ -347,10 +347,10 @@ module.exports = function (io) {
             module.exports.registrarRFID(rfid, 'saida', false);
         });
         socket.on('get foto larm', () => {
-            var digestRequest = require('request-digest')('larm', 'camera123');
+            var digestRequest = require('request-digest')('larm', 'larm@ufscaru');
             digestRequest.request({
                 host: 'http://150.162.234.21',
-                path: '/Camera%2001/poll.php',
+                path: '/CAMERA-1/poll.php',
                 port: 8888,
                 method: 'GET',
                 encoding: null,

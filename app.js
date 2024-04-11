@@ -102,6 +102,7 @@ app.use(function (req, res, next) {
 
     const corsWhitelist = [
         'https://larm.netlify.com',
+        'https://larm.gq',
         'https://localhost',
     ];
     if (corsWhitelist.indexOf(req.headers.origin) !== -1) {
@@ -131,8 +132,8 @@ let a=false;
 var digestRequest = require('request-digest')('larm', 'larm@ufscaru');
 app.get('/httpsCameraImage/:id.jpg',(req,res)=>{
             digestRequest.request({
-                host: 'http://150.162.234.21',
-                path: '/Camera%20'+req.params.id+'/poll.php',
+                host: 'http://150.162.234.150',
+                path: '/'+req.params.id+'/poll.php',
                 port: 8888,
                 method: 'GET',
                 encoding: null,
